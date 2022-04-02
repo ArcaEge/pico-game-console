@@ -29,35 +29,40 @@ tetris_tune = [[659, 0.5, 0], [493, 0.25, 0], [523, 0.25, 0], [587, 0.25, 0],
                [293, 1, 0], [246, 1, 0], [261, 0.5, 0], [329, 0.5, 0], [440, 1, 0],
                [415, 2, 0]]
 
+buttonRight = Pin(5, Pin.IN, Pin.PULL_UP)
+buttonLeft = Pin(4, Pin.IN, Pin.PULL_UP)
+buttonDown = Pin(3, Pin.IN, Pin.PULL_UP)
+buttonUp = Pin(2, Pin.IN, Pin.PULL_UP)
+
 tetrominos = [
      {"object":
       [[[1,1,1,1], # rotate=0
       [0,0,0,0],
       [0,0,0,0],
-      [0,0,0,0]],
+      [0,0,0,0], 4],
      [[1,0,0,0], # rotate=1
       [1,0,0,0],
       [1,0,0,0],
-      [1,0,0,0]]],
+      [1,0,0,0], 1]],
       "color": oled.rgb(0, 240, 240)},
      {"object":
         [
          [[1,1,1,0], # rotate=0
           [1,0,0,0],
           [0,0,0,0],
-          [0,0,0,0]],
+          [0,0,0,0], 3],
          [[1,1,0,0], # rotate=1
           [0,1,0,0],
           [0,1,0,0],
-          [0,0,0,0]],
+          [0,0,0,0], 2],
          [[0,0,1,0], # rotate=2
           [1,1,1,0],
           [0,0,0,0],
-          [0,0,0,0]],
+          [0,0,0,0], 3],
          [[1,0,0,0], # rotate=3
           [1,0,0,0],
           [1,1,0,0],
-          [0,0,0,0]]
+          [0,0,0,0], 2]
         ],
       "color": oled.rgb(240, 160, 0)},
      {"object":
@@ -65,72 +70,80 @@ tetrominos = [
          [[1,0,0,0], # rotate=0
           [1,1,1,0],
           [0,0,0,0],
-          [0,0,0,0]],
+          [0,0,0,0], 3],
          [[1,1,0,0], # rotate=1
           [1,0,0,0],
           [1,0,0,0],
-          [0,0,0,0]],
+          [0,0,0,0], 2],
          [[1,1,1,0], # rotate=2
           [0,0,1,0],
           [0,0,0,0],
-          [0,0,0,0]],
+          [0,0,0,0], 3],
          [[0,1,0,0], # rotate=3
           [0,1,0,0],
           [1,1,0,0],
-          [0,0,0,0]]
+          [0,0,0,0], 2]
         ],
       "color": oled.rgb(0, 0, 240)},
-    [ # 4
-     [[0,1,0,0], # rotate=0
-      [1,1,1,0],
-      [0,0,0,0],
-      [0,0,0,0]],
-     [[1,0,0,0], # rotate=1
-      [1,1,0,0],
-      [1,0,0,0],
-      [0,0,0,0]],
-     [[1,1,1,0], # rotate=2
-      [0,1,0,0],
-      [0,0,0,0],
-      [0,0,0,0]],
-     [[0,1,0,0], # rotate=3
-      [1,1,0,0],
-      [0,1,0,0],
-      [0,0,0,0]],
-    ],
-    [ # 5
-     [[0,1,1,0], # rotate=0
-      [1,1,0,0],
-      [0,0,0,0],
-      [0,0,0,0]],
-     [[1,0,0,0], # rotate=1
-      [1,1,0,0],
-      [0,1,0,0],
-      [0,0,0,0]]
-    ],
-    [ #  6
-     [[1,1,0,0], # rotate=0
-      [0,1,1,0],
-      [0,0,0,0],
-      [0,0,0,0]],
-     [[0,1,0,0], # rotate=1
-      [1,1,0,0],
-      [1,0,0,0],
-      [0,0,0,0]]
-    ],
-    [ #  7
-     [[1,1,0,0], # rotate=0
-      [1,1,0,0],
-      [0,0,0,0],
-      [0,0,0,0]]
-    ]
+     {"object":
+        [ # 4
+         [[0,1,0,0], # rotate=0
+          [1,1,1,0],
+          [0,0,0,0],
+          [0,0,0,0], 3],
+         [[1,0,0,0], # rotate=1
+          [1,1,0,0],
+          [1,0,0,0],
+          [0,0,0,0], 2],
+         [[1,1,1,0], # rotate=2
+          [0,1,0,0],
+          [0,0,0,0],
+          [0,0,0,0], 3],
+         [[0,1,0,0], # rotate=3
+          [1,1,0,0],
+          [0,1,0,0],
+          [0,0,0,0], 2],
+        ],
+      "color": oled.rgb(160, 0, 240)},
+     {"object":
+        [ # 5
+         [[0,1,1,0], # rotate=0
+          [1,1,0,0],
+          [0,0,0,0],
+          [0,0,0,0], 3],
+         [[1,0,0,0], # rotate=1
+          [1,1,0,0],
+          [0,1,0,0],
+          [0,0,0,0], 2]
+        ],
+      "color": oled.rgb(0, 240, 0)},
+     {"object":
+        [ #  6
+         [[1,1,0,0], # rotate=0
+          [0,1,1,0],
+          [0,0,0,0],
+          [0,0,0,0], 3],
+         [[0,1,0,0], # rotate=1
+          [1,1,0,0],
+          [1,0,0,0],
+          [0,0,0,0], 2]
+        ],
+      "color": oled.rgb(240, 0, 0)},
+     {"object":
+        [ #  7
+         [[1,1,0,0], # rotate=0
+          [1,1,0,0],
+          [0,0,0,0],
+          [0,0,0,0], 2]
+        ],
+      "color": oled.rgb(240, 240, 0)},
 ]
 
 speaker = PWM(Pin(0))
 functions.setSpeaker(speaker)
 
 grid = []
-unmerged = {"number": 1, "rotation": 0, "x": 5, "y": 2}
+unmerged = {"number": 6, "rotation": 0, "x": 2, "y": 2}
 
 # for i in range(2):
 #     functions.play_tune(tetris_tune)
@@ -177,8 +190,33 @@ def mergeTetromino(tetromino:int=unmerged["number"], rotation:int=unmerged["rota
             if tetrominoObject[row][cell] == 1:
                 grid[gridY+row][gridX+cell] = color
 
+def shiftLeft():
+    isEmpty = True
+    tetrominoObject = tetrominos[unmerged["number"]]["object"][unmerged["rotation"]]
+    for row in range(4):
+        for cell in range(4):
+            if tetrominoObject[row][cell] == 1:
+                if grid[unmerged["y"]+row][unmerged["x"]+cell-1] != empty or unmerged["x"]+cell-1 < 0:
+                    isEmpty = False
+#             print(isEmpty, grid[unmerged["y"]+row][unmerged["x"]+cell-1])
+    if isEmpty:
+        unmerged["x"] -= 1
+
 createGrid()
 # oled.text('NEXT', int(game_width + next_block_area/2-7*len("NEXT")/2), 20, 0xffff)
 # drawWalls()
+mergeTetromino(0, 1, 0, 0)
+showSquares()
+oled.show()
+
+sleep(1)
+
+shiftLeft()
+showSquares()
+oled.show()
+
+sleep(1)
+
+shiftLeft()
 showSquares()
 oled.show()
