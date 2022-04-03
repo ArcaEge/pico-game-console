@@ -8,10 +8,12 @@ import functions
 import _thread
 import gc
 
+multiplier = 10
 block_size = 8
-game_width = block_size*10
+game_width = block_size*multiplier
 next_block_area = 128-game_width
 empty = oled.rgb(64,64,64)
+game_height = None
 
 tetris_tune = [[659, 0.5, 0], [493, 0.25, 0], [523, 0.25, 0], [587, 0.25, 0],
                [659, 0.125, 0], [587, 0.125, 0], [523, 0.25, 0], [493, 0.25, 0],
@@ -143,29 +145,24 @@ speaker = PWM(Pin(0))
 functions.setSpeaker(speaker)
 
 grid = []
-unmerged = {"number": 6, "rotation": 0, "x": 2, "y": 2}
+unmerged = {"number": 0, "rotation": 0, "x": 1, "y": 13}
+next = None
 
 # for i in range(2):
 #     functions.play_tune(tetris_tune)
 
 def createGrid():
+    global game_height
     for row in range(int(128/block_size)):
         grid.append([])
-        for cell in range(game_width/block_size):
+        for cell in range(multiplier):
             grid[row].append(empty)
+    game_height = len(grid)
 
 def drawWalls(show:bool = False):
     oled.rect(0, 0, game_width, 128, oled.rgb(128,128,128))
     if show:
         oled.show()
-
-# def drawSquares(show:bool = False):
-#     for row in range(int(128/block_size)):
-#         start = row * block_size
-#         for cell in range(game_width/block_size):
-#             oled.fill_rect(cell * block_size + 1 , start + 1, block_size - 1, block_size - 1, oled.rgb(64,64,64))
-#     if show:
-#         oled.show()
 
 def showSquares(show:bool = False, showUnmerged:bool=True):
     for row in range(int(128/block_size)):
@@ -196,27 +193,86 @@ def shiftLeft():
     for row in range(4):
         for cell in range(4):
             if tetrominoObject[row][cell] == 1:
-                if grid[unmerged["y"]+row][unmerged["x"]+cell-1] != empty or unmerged["x"]+cell-1 < 0:
+                try:
+                    if grid[unmerged["y"]+row][unmerged["x"]+cell-1] != empty or unmerged["x"]+cell-1 < 0:
+                        isEmpty = False
+                except IndexError:
                     isEmpty = False
-#             print(isEmpty, grid[unmerged["y"]+row][unmerged["x"]+cell-1])
     if isEmpty:
         unmerged["x"] -= 1
 
+def shiftRight():
+    isEmpty = True
+    tetrominoObject = tetrominos[unmerged["number"]]["object"][unmerged["rotation"]]
+    for row in range(4):
+        for cell in range(4):
+            if tetrominoObject[row][cell] == 1:
+                try:
+                    if grid[unmerged["y"]+row][unmerged["x"]+cell+1] != empty or unmerged["x"]+cell+1 > multiplier:
+                        isEmpty = False
+                except IndexError:
+                    isEmpty = False
+    if isEmpty:
+        unmerged["x"] += 1
+
+def shiftDown():
+    isEmpty = True
+    tetrominoObject = tetrominos[unmerged["number"]]["object"][unmerged["rotation"]]
+    for row in range(4):
+        for cell in range(4):
+            if tetrominoObject[row][cell] == 1:
+                try:
+                    if grid[unmerged["y"]+row+1][unmerged["x"]+cell] != empty or unmerged["y"]+cell+1 > game_height:
+                        isEmpty = False
+                except IndexError:
+                    isEmpty = False
+    if isEmpty:
+        unmerged["y"] += 1
+    return isEmpty
+
+def rotate():
+    isEmpty = True
+    tetrominoObject = tetrominos[unmerged["number"]]["object"][unmerged["rotation"]]
+    nextRotation = unmerged["rotation"] + 1 if unmerged["rotation"] < len(tetrominos[unmerged["number"]]["object"]) - 1 else 0
+    rotatedObject = tetrominos[unmerged["number"]]["object"][nextRotation] 
+    for row in range(4):
+        for cell in range(4):
+            if rotatedObject[row][cell] == 1:
+                try:
+                    if grid[unmerged["y"]+row][unmerged["x"]+cell] != empty:
+                        isEmpty = False
+                except IndexError:
+                    isEmpty = False
+    if isEmpty:
+        unmerged["rotation"] = nextRotation
+    return isEmpty
+
 createGrid()
 # oled.text('NEXT', int(game_width + next_block_area/2-7*len("NEXT")/2), 20, 0xffff)
-# drawWalls()
-mergeTetromino(0, 1, 0, 0)
+mergeTetromino(0, 1, 5, 12)
 showSquares()
 oled.show()
 
 sleep(1)
 
-shiftLeft()
+rotate()
 showSquares()
 oled.show()
 
 sleep(1)
 
-shiftLeft()
+rotate()
+showSquares()
+oled.show()
+
+sleep(1)
+
+rotate()
+showSquares()
+oled.show()
+
+sleep(1)
+
+rotate()
 showSquares()
 oled.show()
