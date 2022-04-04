@@ -42,8 +42,10 @@ speaker.duty_u16(0)
 
 try:
     if test.value() == False:
-        exec(open('games/tetris/tetris.py').read())
+        del test
+        exec(open('games/tetris.py').read())
     else:
         exec(open('games/snake.py').read())
 except SystemExit:
-    pass
+    ssd.fill(0)
+    ssd.show()
