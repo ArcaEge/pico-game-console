@@ -109,10 +109,21 @@ def play_tune(tune):
     for i in tune:
         buzz(speaker, i[0], i[1], i[2])
 
-async def play_tune_async(tune):
-    for i in tune:
-        speaker.duty_u16(int(65536*0.2))
-        speaker.freq(i[0])
-        await asyncio.sleep(i[1])
-        speaker.duty_u16(int(65536*0))
-        await asyncio.sleep(i[2])
+async def play_tune_async(tune, q):
+    while True:
+        for i in tune:
+            if not q.empty():
+                queue = await q.get()
+                if queue == "pause":
+                    speaker.duty_u16(0)
+                    while True:
+                        msg = await q.get()
+                        print(msg)
+                        if msg == "resume":
+                            break
+                    await asyncio.sleep(.05)
+            speaker.duty_u16(int(65536*0.002))
+            speaker.freq(i[0])
+            await asyncio.sleep(i[1])
+            speaker.duty_u16(int(65536*0))
+            await asyncio.sleep(i[2])

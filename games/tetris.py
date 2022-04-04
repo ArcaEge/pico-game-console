@@ -1,6 +1,6 @@
 from machine import Pin, PWM, Timer
 from utime import sleep, ticks_ms
-from primitives import Pushbutton
+from primitives import Pushbutton, Queue
 from random import randrange
 from color_setup import ssd as oled
 from math import sqrt, floor
@@ -38,6 +38,7 @@ buttonRight = Pin(5, Pin.IN, Pin.PULL_UP)
 buttonLeft = Pin(4, Pin.IN, Pin.PULL_UP)
 buttonDown = Pin(3, Pin.IN, Pin.PULL_UP)
 buttonUp = Pin(2, Pin.IN, Pin.PULL_UP)
+buttonPause = Pin(6, Pin.IN, Pin.PULL_UP)
 
 Pushbutton.long_press_ms=250
 
@@ -45,6 +46,7 @@ pbRight = Pushbutton(buttonRight)
 pbLeft = Pushbutton(buttonLeft)
 pbDown = Pushbutton(buttonDown)
 pbUp = Pushbutton(buttonUp)
+pbPause = Pushbutton(buttonPause)
 
 tetrominos = [
      {"object":
@@ -161,6 +163,8 @@ del temp_random
 next = int(randrange(0,7))
 score = 0
 delay = .8
+paused = False
+q = Queue()
 
 # for i in range(2):
 #     functions.play_tune(tetris_tune)
@@ -343,10 +347,26 @@ def drawScore():
 def null_func(*args, **kwargs):
     pass
 
+def pause(timer):
+    global paused
+    paused = not paused
+
+def debounce(pin):
+    global timer
+    timer.init(mode=Timer.ONE_SHOT, period=200, callback=pause)
+
 async def main():
-    global empty_list, score, delay, grid, block_size
+    global empty_list, score, delay, grid, block_size, paused, q
     break_loop = False
+    
+    buttonPause.irq(debounce, Pin.IRQ_RISING)
+    
     while True:
+        while True:
+            if buttonUp.value():
+                await asyncio.sleep(0.2)
+                break
+        music = asyncio.create_task(functions.play_tune_async(tetris_tune, q))
         if break_loop: break
         oled.fill(0)
         createGrid()
@@ -367,6 +387,7 @@ async def main():
         pbRight.release_func(timer.deinit, ())
         pbLeft.release_func(timer.deinit, ())
         pbUp.release_func(timer.deinit, ())
+#         pbPause.release_func(pause, ())
         
         isNotStopped = True
         gameOver = False
@@ -375,6 +396,8 @@ async def main():
         while True:
             [isNotStopped, gameOver] = shiftDown()
             if gameOver:
+                music.cancel()
+                speaker.duty_u16(0)
                 break
             if not isNotStopped:
                 spawnTetromino()
@@ -389,13 +412,39 @@ async def main():
                         grid.pop(row)
                         grid.insert(0,empty_row)
                         fullRows += 1
-                        delay -= .02 if delay > 0.35 else 0
+                        delay -= .02 if delay > 0.3 else 0
                 if fullRows > 0:
                     score += 1 if fullRows == 1 else fullRows * 2
                     drawScore()
                 render()
                 isNotStopped = True
-            await asyncio.sleep(delay)
+            for i in range(4):
+                await asyncio.sleep(delay/4)
+#                 break_loop2 = True
+                if paused:
+                    await q.put("pause")
+                    speaker.duty_u16(0)
+                    oled.fill(0)
+                    hOffset = int((128 - 7*len("PAUSED" + str(score)))/2)
+                    oled.text("PAUSED", hOffset, 60, oled.rgb(255,255,255))
+                    circle(34,103,5,oled.rgb(128,128,128))
+                    oled.text("RESUME", 42, 100, oled.rgb(255,255,255))
+                    circle(34,115,5,oled.rgb(255,0,0))
+                    oled.text("QUIT", 42, 112, oled.rgb(255,255,255))
+                    oled.show()
+                    while paused:
+                        if not buttonRight.value():
+                            sys.exit()
+                        sleep(.05)
+                    oled.fill(0)
+                    oled.text('NEXT', int(game_width + next_block_area/2-7*len("NEXT")/2), 20, 0xffff)
+                    oled.text('SCORE', int(game_width + next_block_area/2-7*len("SCORE")/2), 100, 0xffff)
+                    drawNext()
+                    drawScore()
+                    render()
+                    await q.put("resume")
+                    break
+#                     if break_loop2: break
         
         hOffset = int((128 - 7*len("GAME OVER"))/2)
         oled.fill(0)
@@ -404,9 +453,8 @@ async def main():
         oled.text("SCORE: " + str(score), hOffset, int((128/2) + 6), oled.rgb(255,255,255))
         circle(34,103,5,oled.rgb(255,255,0))
         oled.text("CONTINUE", 42, 100, oled.rgb(255,255,255))
-        hOffset = int((128 - 7*len(" QUIT" + str(score)))/2)
-        circle(43,115,5,oled.rgb(255,0,0))
-        oled.text(" QUIT", hOffset, 112, oled.rgb(255,255,255))
+        circle(34,115,5,oled.rgb(255,0,0))
+        oled.text("QUIT", 42, 112, oled.rgb(255,255,255))
         oled.show()
         grid = []
         temp_random = int(randrange(0,13)/2)
@@ -426,13 +474,14 @@ async def main():
         pbRight.release_func(null_func, ())
         pbLeft.release_func(null_func, ())
         pbUp.release_func(null_func, ())
-        
+        await asyncio.sleep(0.5)
         while True:
-            if not buttonUp.value():
+            if pbUp():
                 break
-            elif not buttonRight.value():
+            elif pbRight():
                 asyncio.new_event_loop()
                 sys.exit()
+            await asyncio.sleep(0.025)
 
 try:
     asyncio.run(main())
