@@ -24,12 +24,17 @@ import functions
 # except KeyboardInterrupt:
 #     player.stop()
 
+up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
+down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
+left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
+right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
+
 ssd.fill(0)
+ssd.text('GameBoi', 32, 48, 0xffff)
 ssd.text('Loading...', 25, 60, 0xffff)
 functions.border(ssd)
 ssd.show()
 
-test = Pin(2, Pin.IN, Pin.PULL_UP)
 speaker = PWM(Pin(0))
 speaker.duty_u16(1000)
 speaker.freq(600)
@@ -40,12 +45,52 @@ speaker.freq(1200)
 sleep(.25)
 speaker.duty_u16(0)
 
-try:
-    if test.value() == False:
-        del test
-        exec(open('games/tetris.py').read())
-    else:
-        exec(open('games/snake.py').read())
-except SystemExit:
-    ssd.fill(0)
-    ssd.show()
+games = [
+    {"name": "Snake", "path": 'games/snake.py', "selected": True},
+    {"name": "Tetris", "path": 'games/tetris.py', "selected": False}
+]
+
+selected = 0
+
+def drawGames():
+    for n,i in enumerate(games):
+            ssd.text(i["name"], 10, 15+(n+1)*15, ssd.rgb(255,64,64) if selected == n else ssd.rgb(255,255,255))
+
+while True:
+    up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
+    down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
+    left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
+    right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
+    try:
+        ssd.fill(0)
+        ssd.text("GameBoi", 5, 15, ssd.rgb(64,64,255))
+        ssd.hline(6, 23, 53, ssd.rgb(64,64,255))
+        drawGames()
+        ssd.show()
+        while True:
+            if not up.value():
+                while True:
+                    if up.value():
+                        selected -= 1 if selected > 0 else 0
+                        drawGames()
+                        ssd.show()
+                        break
+            if not down.value():
+                while True:
+                    if down.value():
+                        selected += 1 if selected < len(games)-1 else 0
+                        drawGames()
+                        ssd.show()
+                        break
+            if not right.value():
+                while True:
+                    if right.value():
+                        exec(open(games[selected]["path"]).read())
+                        break
+    except SystemExit:
+        if not right.value():
+                while True:
+                    if right.value():
+                        break
+        ssd.fill(0)
+        ssd.show()

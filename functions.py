@@ -122,7 +122,7 @@ async def play_tune_async(tune, q):
                         if msg == "resume":
                             break
                     await asyncio.sleep(.05)
-            speaker.duty_u16(int(65536*0.002))
+            speaker.duty_u16(int(65536*0.05))
             speaker.freq(i[0])
             await asyncio.sleep(i[1])
             speaker.duty_u16(int(65536*0))
