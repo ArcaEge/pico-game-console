@@ -425,7 +425,7 @@ async def main():
                     await q.put("pause")
                     speaker.duty_u16(0)
                     oled.fill(0)
-                    hOffset = int((128 - 7*len("PAUSED" + str(score)))/2)
+                    hOffset = int((128 - 7*len("PAUSED"))/2)
                     oled.text("PAUSED", hOffset, 60, oled.rgb(255,255,255))
                     circle(34,103,5,oled.rgb(128,128,128))
                     oled.text("RESUME", 42, 100, oled.rgb(255,255,255))

@@ -1,4 +1,4 @@
-from machine import Pin, PWM
+from machine import Pin, PWM, Timer
 from utime import sleep, ticks_ms
 from random import randrange
 from color_setup import ssd as oled
@@ -32,7 +32,9 @@ arenaWidth=gameWidth*3*scale
 arenaHeight=gameHeight*3*scale
 isDead = False
 startWasPressed = False
+pause = False
 direction = "left"
+gameOver = False
 
 gc.threshold(4096)
 
@@ -274,8 +276,20 @@ def moveSnake(dx,dy):
     oled.show()
 
 def buttonPressedHandle(p):
-    global startWasPressed
+    global startWasPressed, pause, gameOver
+    if gameOver:
+        gameOver = False
+        return
+    if startWasPressed:
+        pause = not pause
+        return
     startWasPressed = True
+
+timer = Timer(-1)
+
+def debounce(pin):
+    global timer
+    timer.init(mode=Timer.ONE_SHOT, period=200, callback=buttonPressedHandle)
 
 def setupUI():
     global buttonRight, buttonLeft, buttonUp, buttonDown, buttonStart
@@ -285,8 +299,9 @@ def setupUI():
     buttonDown = Pin(3, Pin.IN, Pin.PULL_UP)
     buttonUp = Pin(2, Pin.IN, Pin.PULL_UP)
     
-    buttonStart = Pin(2, Pin.IN, Pin.PULL_UP)
-    buttonStart.irq(trigger=Pin.IRQ_FALLING, handler=buttonPressedHandle)
+    buttonStart = Pin(6, Pin.IN, Pin.PULL_UP)
+    buttonStart.irq(trigger=Pin.IRQ_RISING, handler=debounce)
+    
 
 def changeDir(nuDx, nuDy):
     global snake, dx, dy
@@ -379,7 +394,7 @@ def AreYouReady():
             hOffset = int((WIDTH - 7*len("PRESS  "))/2) - 4
             oled.fill(0)
             oled.text("PRESS  ", hOffset, int((HEIGHT/2) - 6), oled.rgb(255,255,255))
-            circle(85,61,5,oled.rgb(255,255,0))
+            circle(85,61,5,oled.rgb(128,128,128))
             hOffset = int((WIDTH - 7*len("TO START"))/2) - 4
             oled.text("TO START", hOffset, int((HEIGHT/2) + 6), oled.rgb(255,255,255))
         oled.show()
@@ -388,33 +403,39 @@ def AreYouReady():
         isBlank = not isBlank
 
 def GameOver():
-    global startWasPressed, score
+    global score, gameOver
     global spd, direction
     global originalSpd
     gc.collect()
     spd = originalSpd
-    startWasPressed = False
     first = True
     direction = "right"
-    while not startWasPressed:
+    while gameOver:
         hOffset = int((WIDTH - 7*len("GAME OVER"))/2)
         oled.fill(0)
         oled.text("GAME OVER", hOffset, int((HEIGHT/2) - 6), oled.rgb(255,255,255))
         hOffset = int((WIDTH - 7*len("SCORE: " + str(score)))/2)
         oled.text("SCORE: " + str(score), hOffset, int((HEIGHT/2) + 6), oled.rgb(255,255,255))
+        circle(34,103,5,oled.rgb(128,128,128))
+        oled.text("CONTINUE", 42, 100, oled.rgb(255,255,255))
+        circle(34,115,5,oled.rgb(255,0,0))
+        oled.text("QUIT", 42, 112, oled.rgb(255,255,255))
         oled.show()
         if first:
             first = False
             functions.gameOver()
-        else:
-            sleep(1)
-        
-        #-- draw end game --
-        oled.fill(0)
-        DrawWalls()
-        drawApple(1)
-        drawSnake()
-        sleep(.5)
+        while not buttonRight.value():
+            if buttonRight.value():
+                sys.exit()
+#         else:
+#             sleep(1)
+#         
+#         #-- draw end game --
+#         oled.fill(0)
+#         DrawWalls()
+#         drawApple(1)
+#         drawSnake()
+#         sleep(.5)
     
     # wait for button release
     while buttonStart.value() == 0:
@@ -435,10 +456,10 @@ def main():
     oled.fill(0)
     x=int(WIDTH/3/scale/2)
     y=int(HEIGHT/3/scale/2)
-    global snakeX, snakeY 
+    global snakeX, snakeY, gameOver
 
     while True:
-        AreYouReady()
+#         AreYouReady()
         
         snakeX, snakeY = int(WIDTH/3/scale/2), int(HEIGHT/3/scale/2)
           
@@ -459,5 +480,22 @@ def main():
                 for i in range(buttonSpdScale):
                     sleep(spd/buttonSpdScale)
                     CheckButtons()
+                    if pause:
+                        speaker.duty_u16(0)
+                        oled.fill(0)
+                        hOffset = int((128 - 7*len("PAUSED"))/2)
+                        oled.text("PAUSED", hOffset, 60, oled.rgb(255,255,255))
+                        circle(34,103,5,oled.rgb(128,128,128))
+                        oled.text("RESUME", 42, 100, oled.rgb(255,255,255))
+                        circle(34,115,5,oled.rgb(255,0,0))
+                        oled.text("QUIT", 42, 112, oled.rgb(255,255,255))
+                        oled.show()
+                        while pause:
+                            if not buttonRight.value():
+                                sys.exit()
+                            sleep(.05)
+                        oled.fill(0)
+                        drawApple(1)
+        gameOver = True
         GameOver()
 main()

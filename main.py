@@ -16,6 +16,8 @@ import uos
 from machine import Pin, PWM
 from time import sleep
 import functions
+import json
+import _thread
 # from wavePlayer import wavePlayer
 # player = wavePlayer()
 
@@ -28,15 +30,25 @@ up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
 down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
 left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
 right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
+pause = machine.Pin(6, machine.Pin.IN, machine.Pin.PULL_UP)
 
 ssd.fill(0)
-ssd.text('GameBoi', 32, 48, 0xffff)
 ssd.text('Loading...', 25, 60, 0xffff)
 functions.border(ssd)
 ssd.show()
 
 speaker = PWM(Pin(0))
-speaker.duty_u16(1000)
+
+f = open("settings.json", "r+b")
+
+db = json.load(f)
+volume = db["volume"]
+
+f.close()
+
+functions.setSpeaker(speaker)
+
+speaker.duty_u16(volume)
 speaker.freq(600)
 sleep(.25)
 speaker.freq(800)
@@ -47,24 +59,50 @@ speaker.duty_u16(0)
 
 games = [
     {"name": "Snake", "path": 'games/snake.py', "selected": True},
-    {"name": "Tetris", "path": 'games/tetris.py', "selected": False}
+    {"name": "Tetris", "path": 'games/tetris.py', "selected": False},
+    {"name": "Settings", "path": 'settings.py', "selected": False}
 ]
 
 selected = 0
 
+arrow = [
+    [0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,0,0,0],
+    [0,0,0,0,0,1,1,0,0],
+    [0,0,0,0,0,0,1,1,0],
+    [0,0,0,0,0,1,1,0,0],
+    [0,0,0,0,1,1,0,0,0],
+    [0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0],
+]
+
 def drawGames():
     for n,i in enumerate(games):
-            ssd.text(i["name"], 10, 15+(n+1)*15, ssd.rgb(255,64,64) if selected == n else ssd.rgb(255,255,255))
+        if i["name"] == "Settings":
+            ssd.text(i["name"], 12, 15+(n+1)*15, ssd.rgb(128,128,128))
+            for y, row in enumerate(arrow):
+                for x, c in enumerate(row):
+                    if c:
+                        ssd.pixel(x, y+14+(n+1)*15, ssd.rgb(128,128,128) if n == selected else 0)
+            continue
+        else:
+            ssd.text(i["name"], 15, 15+(n+1)*15, ssd.rgb(255,255,255))
+        for y, row in enumerate(arrow):
+            for x, c in enumerate(row):
+                if c:
+                    ssd.pixel(x+3, y+14+(n+1)*15, ssd.rgb(255,255,255) if n == selected else 0)
 
 while True:
     up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
     down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
     left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
     right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
+    pause = machine.Pin(6, machine.Pin.IN, machine.Pin.PULL_UP)
     try:
         ssd.fill(0)
-        ssd.text("GameBoi", 5, 15, ssd.rgb(64,64,255))
-        ssd.hline(6, 23, 53, ssd.rgb(64,64,255))
+        ssd.text("Games", 12, 15, ssd.rgb(32,32,255))
+#         ssd.hline(6, 23, 39, ssd.rgb(64,64,255))
         drawGames()
         ssd.show()
         while True:
@@ -74,6 +112,8 @@ while True:
                         selected -= 1 if selected > 0 else 0
                         drawGames()
                         ssd.show()
+                        functions.changeDirection()
+                        sleep(.1)
                         break
             if not down.value():
                 while True:
@@ -81,10 +121,13 @@ while True:
                         selected += 1 if selected < len(games)-1 else 0
                         drawGames()
                         ssd.show()
+                        functions.changeDirection()
+                        sleep(.1)
                         break
             if not right.value():
                 while True:
                     if right.value():
+                        functions.changeDirection()
                         exec(open(games[selected]["path"]).read())
                         break
     except SystemExit:
