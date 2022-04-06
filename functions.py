@@ -14,8 +14,8 @@ f.close()
 def valmap(value, istart, istop, ostart, ostop):
   return int(ostart + (ostop - ostart) * ((value - istart) / (istop - istart)))
 
-def border(ssd):
-    ssd.rect(0, 0, 128, 128, ssd.rgb(255,0,0))
+def border(ssd, color=None):
+    ssd.rect(0, 0, 128, 128, ssd.rgb(255,0,0) if color is None else color)
 
 def buzz(buzzerPinObject,frequency,sound_duration,silence_duration):
     buzzerPinObject.duty_u16(volume)

@@ -1,5 +1,5 @@
 from color_setup import ssd as oled
-from machine import Pin, PWM
+from machine import Pin, PWM, reset
 from time import sleep
 import functions
 import json
@@ -58,6 +58,7 @@ arrow = [
 ]
 
 selected = 0
+total_rows = 3
 volume_name_list = ["OFF", "1", "2", "3", "4", "5"]
 volume_value_list = [0, 100, 250, 500, 1000, 30000]
 volume_selected = volume_name_list[volume_value_list.index(db["volume"])]
@@ -78,11 +79,24 @@ def drawItems():
                     if c:
                         oled.pixel(x+62+(len(volume_selected)+1)*8, y+29, oled.rgb(128,128,128))
     
-    for n in range(selected+1):
+    oled.text("Reset High", 15, 45, oled.rgb(255,128,96))
+    oled.text("Scores", 15, 57, oled.rgb(255,128,96))
+    oled.text("Reset All", 15, 72, oled.rgb(255,48,32))
+    
+    for n in range(total_rows):
+        if n == 0:
+            color = oled.rgb(255,255,255)
+            y_pos = 29
+        elif n == 1:
+            color = oled.rgb(255,128,96)
+            y_pos = 44
+        elif n == 2:
+            color = oled.rgb(255,48,32)
+            y_pos = 71
         for y, row in enumerate(arrow):
                 for x, c in enumerate(row):
                     if c:
-                        oled.pixel(x+3, y+14+(n+1)*15, oled.rgb(255,255,255) if selected == n else 0)
+                        oled.pixel(x+3, y+y_pos, color if selected == n else 0)
 
 def play_test_sound():
     functions.update_volume()
@@ -110,6 +124,11 @@ while True:
                         file.write(json.dumps(db))
                     play_test_sound()
                     sleep(.2)
+                elif selected == 1:
+                    try:
+                        exec(open("reset_high_scores.py").read())
+                    except SystemExit:
+                        reset()
                 break
     if not left.value():
         while True:
@@ -132,3 +151,21 @@ while True:
                 functions.changeDirection()
                 f.close()
                 sys.exit()
+    if not up.value():
+        while True:
+            if up.value():
+                selected -= 1 if selected > 0 else 0
+                drawItems()
+                oled.show()
+                functions.changeDirection()
+                sleep(.1)
+                break
+    if not down.value():
+        while True:
+            if down.value():
+                selected += 1 if selected < total_rows-1 else 0
+                drawItems()
+                oled.show()
+                functions.changeDirection()
+                sleep(.1)
+                break

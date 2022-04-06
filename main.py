@@ -32,10 +32,10 @@ left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
 right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
 pause = machine.Pin(6, machine.Pin.IN, machine.Pin.PULL_UP)
 
-ssd.fill(0)
-ssd.text('Loading...', 25, 60, 0xffff)
-functions.border(ssd)
-ssd.show()
+# ssd.fill(0)
+# ssd.text('Loading...', 25, 60, 0xffff)
+# functions.border(ssd)
+# ssd.show()
 
 speaker = PWM(Pin(0))
 
@@ -48,14 +48,20 @@ f.close()
 
 functions.setSpeaker(speaker)
 
-speaker.duty_u16(volume)
-speaker.freq(600)
-sleep(.25)
-speaker.freq(800)
-sleep(.25)
-speaker.freq(1200)
-sleep(.25)
-speaker.duty_u16(0)
+def startup_sound():
+    speaker.duty_u16(volume)
+    speaker.freq(600)
+    sleep(.25)
+    speaker.freq(800)
+    sleep(.25)
+    speaker.freq(1200)
+    sleep(.25)
+    speaker.duty_u16(0)
+
+try:
+    _thread.start_new_thread(startup_sound, ())
+except (OSError, MemoryError):
+    pass
 
 games = [
     {"name": "Snake", "path": 'games/snake.py', "selected": True},
