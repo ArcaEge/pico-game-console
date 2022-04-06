@@ -9,6 +9,7 @@ import functions
 import _thread
 import gc
 import uasyncio as asyncio
+import json
 
 multiplier = 10
 block_size = 8
@@ -17,6 +18,13 @@ next_block_area = 128-game_width
 empty = oled.rgb(64,64,64)
 empty_row = []
 game_height = None
+
+f = open("settings.json", "r+b")
+
+db = json.load(f)
+high_score = db["highScores"]["tetris"]
+
+f.close()
 
 tetris_tune = [[659, 0.5, 0], [493, 0.25, 0], [523, 0.25, 0], [587, 0.25, 0],
                [659, 0.125, 0], [587, 0.125, 0], [523, 0.25, 0], [493, 0.25, 0],
@@ -444,13 +452,17 @@ async def main():
                     render()
                     await q.put("resume")
                     break
-#                     if break_loop2: break
         
-        hOffset = int((128 - 7*len("GAME OVER"))/2)
         oled.fill(0)
-        oled.text("GAME OVER", hOffset, int((128/2) - 6), oled.rgb(255,255,255))
-        hOffset = int((128 - 7*len("SCORE: " + str(score)))/2)
-        oled.text("SCORE: " + str(score), hOffset, int((128/2) + 6), oled.rgb(255,255,255))
+        oled.text("GAME OVER", int((128 - 7*len("GAME OVER"))/2), int((128/2) - 18), oled.rgb(255,255,255))
+        oled.text("SCORE: " + str(score), int((128 - 7*len("SCORE: " + str(score)))/2), int((128/2) - 6), oled.rgb(255,255,255))
+        if high_score < score:
+            db["highScores"]["tetris"] = score
+            with open('settings.json', 'w') as file:
+                file.write(json.dumps(db))
+            oled.text("NEW HIGH SCORE", 6, int((128/2) + 6), oled.rgb(255,255,255))
+        else:
+            oled.text("HIGH SCORE: " + str(high_score), int((128 - 7*len("HIGH SCORE: " + str(high_score)))/2)-5, int((128/2) + 6), oled.rgb(255,255,255))
         circle(34,103,5,oled.rgb(255,255,0))
         oled.text("CONTINUE", 42, 100, oled.rgb(255,255,255))
         circle(34,115,5,oled.rgb(255,0,0))
