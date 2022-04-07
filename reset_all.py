@@ -1,5 +1,5 @@
 from color_setup import ssd as oled
-from machine import Pin, PWM
+from machine import Pin, PWM, reset
 from time import sleep
 import functions
 import json
@@ -34,27 +34,23 @@ arrow = [
 ]
 
 selected = 0
-selectedGames = []
 
 def drawItems():
-    oled.text("Reset High", 12, 15, oled.rgb(255,128,96))
-    oled.text("Scores?", 12, 27, oled.rgb(255,128,96))
+    oled.text("Reset All?", 12, 15, oled.rgb(255,48,32))
 #     functions.border(oled, oled.rgb(128,64,32))
-    oled.text("[ ] Snake:  " + str(db["highScores"]["snake"]), 0, 45, oled.rgb(255,255,255))
-    oled.text("[ ] Tetris: " + str(db["highScores"]["tetris"]), 0, 60, oled.rgb(255,255,255))
-    oled.text("Reset Selected", 15, 75, oled.rgb(255,48,32))
-    for i in selectedGames:
-        if i == "snake":
-            oled.text("*", 8, 45, oled.rgb(255,255,255) if selected == 0 else oled.rgb(128,128,128))
-        elif i == "tetris":
-            oled.text("*", 8, 60, oled.rgb(255,255,255) if selected == 1 else oled.rgb(128,128,128))
-    if (selected == 0 and not any(elem == "snake" for elem in selectedGames)) or (selected == 1 and not any(elem == "tetris" for elem in selectedGames)):
-        oled.text("*", 8, selected*15+45, oled.rgb(255,128,128))
-    elif selected == 2:
+    oled.text("Cancel", 15, 30, oled.rgb(255,255,255))
+    oled.text("Reset", 15, 45, oled.rgb(255,48,32))
+    for n in range(2):
+        if n == 0:
+            color = oled.rgb(255,255,255)
+            y_pos = 29
+        elif n == 1:
+            color = oled.rgb(255,48,32)
+            y_pos = 44
         for y, row in enumerate(arrow):
             for x, c in enumerate(row):
                 if c:
-                    oled.pixel(x+3, y+74, oled.rgb(255,48,32))
+                    oled.pixel(x+3, y+y_pos, color if selected == n else 0)
 
 oled.fill(0)
 drawItems()
@@ -63,32 +59,16 @@ while True:
     if not right.value():
         while True:
             if right.value():
+                functions.changeDirection()
                 if selected == 0:
-                    if any(elem == "snake" for elem in selectedGames):
-                        selectedGames.remove("snake")
-                    else:
-                        selectedGames.append("snake")
-                    drawItems()
+                    reset()
                     oled.show()
                 elif selected == 1:
-                    if any(elem == "tetris" for elem in selectedGames):
-                        selectedGames.remove("tetris")
-                    else:
-                        selectedGames.append("tetris")
-                    drawItems()
+                    db = {"highScores": {"tetris": 0, "snake": 0}, "volume": 30000}
+                    with open('settings.json', 'w') as file:
+                        file.write(json.dumps(db))
+                    reset()
                     oled.show()
-                elif selected == 2:
-                    forloopran = False
-                    for i in selectedGames:
-                        db["highScores"][i] = 0
-                        forloopran = True
-                    if forloopran:
-                        with open('settings.json', 'w') as file:
-                            file.write(json.dumps(db))
-                    f.close()
-                    sys.exit()
-                functions.changeDirection()
-                break
     if not pause.value():
         while True:
             if pause.value():

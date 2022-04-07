@@ -1,5 +1,5 @@
 from machine import Pin, PWM, Timer
-from utime import sleep, ticks_ms
+from utime import sleep, ticks_ms, time
 from primitives import Pushbutton, Queue
 from random import randrange
 from color_setup import ssd as oled
@@ -46,7 +46,7 @@ buttonRight = Pin(5, Pin.IN, Pin.PULL_UP)
 buttonLeft = Pin(4, Pin.IN, Pin.PULL_UP)
 buttonDown = Pin(3, Pin.IN, Pin.PULL_UP)
 buttonUp = Pin(2, Pin.IN, Pin.PULL_UP)
-buttonPause = Pin(6, Pin.IN, Pin.PULL_UP)
+buttonPause = Pin(7, Pin.IN, Pin.PULL_UP)
 
 Pushbutton.long_press_ms=250
 

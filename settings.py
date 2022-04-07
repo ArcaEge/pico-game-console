@@ -10,7 +10,7 @@ up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
 down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
 left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
 right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
-pause = machine.Pin(6, machine.Pin.IN, machine.Pin.PULL_UP)
+pause = machine.Pin(7, machine.Pin.IN, machine.Pin.PULL_UP)
 
 f = open("settings.json", "r")
 lines = f.read()
@@ -127,6 +127,11 @@ while True:
                 elif selected == 1:
                     try:
                         exec(open("reset_high_scores.py").read())
+                    except SystemExit:
+                        reset()
+                elif selected == 2:
+                    try:
+                        exec(open("reset_all.py").read())
                     except SystemExit:
                         reset()
                 break

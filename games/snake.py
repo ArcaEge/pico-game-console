@@ -7,6 +7,7 @@ import sys
 import functions
 import _thread
 import gc
+import json
 
 # up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
 # down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
@@ -35,6 +36,13 @@ startWasPressed = False
 pause = False
 direction = "left"
 gameOver = False
+
+f = open("settings.json", "r+b")
+
+db = json.load(f)
+high_score = db["highScores"]["snake"]
+
+f.close()
 
 gc.threshold(4096)
 
@@ -299,7 +307,7 @@ def setupUI():
     buttonDown = Pin(3, Pin.IN, Pin.PULL_UP)
     buttonUp = Pin(2, Pin.IN, Pin.PULL_UP)
     
-    buttonStart = Pin(6, Pin.IN, Pin.PULL_UP)
+    buttonStart = Pin(7, Pin.IN, Pin.PULL_UP)
     buttonStart.irq(trigger=Pin.IRQ_RISING, handler=debounce)
     
 
@@ -411,11 +419,17 @@ def GameOver():
     first = True
     direction = "right"
     while gameOver:
-        hOffset = int((WIDTH - 7*len("GAME OVER"))/2)
         oled.fill(0)
-        oled.text("GAME OVER", hOffset, int((HEIGHT/2) - 6), oled.rgb(255,255,255))
-        hOffset = int((WIDTH - 7*len("SCORE: " + str(score)))/2)
-        oled.text("SCORE: " + str(score), hOffset, int((HEIGHT/2) + 6), oled.rgb(255,255,255))
+        oled.text("GAME OVER", int((128 - 7*len("GAME OVER"))/2), int((128/2) - 18), oled.rgb(255,255,255))
+        oled.text("SCORE: " + str(score), int((128 - 7*len("SCORE: " + str(score)))/2), int((128/2) - 6), oled.rgb(255,255,255))
+        if high_score < score:
+            db["highScores"]["snake"] = score
+            with open('settings.json', 'w') as file:
+                file.write(json.dumps(db))
+            oled.text("NEW HIGH SCORE", 6, int((128/2) + 6), oled.rgb(255,255,255))
+        else:
+            oled.text("HIGH SCORE: " + str(high_score), int((128 - 7*len("HIGH SCORE: " + str(high_score)))/2)-5, int((128/2) + 6), oled.rgb(255,255,255))
+        
         circle(34,103,5,oled.rgb(128,128,128))
         oled.text("CONTINUE", 42, 100, oled.rgb(255,255,255))
         circle(34,115,5,oled.rgb(255,0,0))

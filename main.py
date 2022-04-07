@@ -30,7 +30,7 @@ up = machine.Pin(2, machine.Pin.IN, machine.Pin.PULL_UP)
 down = machine.Pin(3, machine.Pin.IN, machine.Pin.PULL_UP)
 left = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
 right = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
-pause = machine.Pin(6, machine.Pin.IN, machine.Pin.PULL_UP)
+pause = machine.Pin(7, machine.Pin.IN, machine.Pin.PULL_UP)
 
 # ssd.fill(0)
 # ssd.text('Loading...', 25, 60, 0xffff)

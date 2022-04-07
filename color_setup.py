@@ -39,7 +39,7 @@ pdc = machine.Pin(15, machine.Pin.OUT, value=0)
 pcs = machine.Pin(13, machine.Pin.OUT, value=1)
 prst = machine.Pin(14, machine.Pin.OUT, value=1)
 #spi = machine.SPI(1, baudrate=3_000_000)
-spi = machine.SPI(1, sck=machine.Pin(10, machine.Pin.OUT), mosi=machine.Pin(11, machine.Pin.OUT), miso=machine.Pin(8, machine.Pin.OUT), baudrate=60_000_000)
+spi = machine.SPI(1, sck=machine.Pin(10, machine.Pin.OUT), mosi=machine.Pin(11, machine.Pin.OUT), miso=machine.Pin(8, machine.Pin.OUT), baudrate=10_000_000)
 gc.collect()  # Precaution before instantiating framebuf
 ssd = SSD(spi, pcs, pdc, prst, height)  # Create a display instance
 
